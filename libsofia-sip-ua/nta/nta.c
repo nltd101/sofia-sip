@@ -565,6 +565,7 @@ struct nta_outgoing_s
   unsigned orq_must_100rel:1;
   unsigned orq_timestamp:1;	/**< Insert @Timestamp header. */
   unsigned orq_100rel:1;	/**< Support 100rel */
+  unsigned orq_try_other_tp:1;  /**< Allow app to disable retry on other protocol (default: enable) */
   unsigned:0;	/* pad */
 
 #if HAVE_SOFIA_SRESOLV
@@ -7952,7 +7953,7 @@ nta_outgoing_t *outgoing_create(nta_agent_t *agent,
   ta_list ta;
   char const *scheme = NULL;
   char const *port = NULL;
-  int invalid, resolved = 0, stateless = 0, user_via = agent->sa_user_via;
+  int invalid, resolved = 0, stateless = 0, user_via = agent->sa_user_via, retry_other_tp = 1;
   int invite_100rel = agent->sa_invite_100rel;
   int explicit_transport = 1;
   int call_tls_orq_connect_timeout_is_set = 0;
@@ -8062,6 +8063,7 @@ nta_outgoing_t *outgoing_create(nta_agent_t *agent,
   orq->orq_uas       = !stateless && agent->sa_is_a_uas;
   orq->orq_call_tls_connect_timeout_is_set = call_tls_orq_connect_timeout_is_set;
   orq->orq_call_tls_connect_timeout = (call_tls_orq_connect_timeout > 0) ? call_tls_orq_connect_timeout : 0;
+  orq->orq_try_other_tp = retry_other_tp;
 
   if (cc)
     orq->orq_cc = nta_compartment_ref(cc);
@@ -8404,7 +8406,7 @@ outgoing_send(nta_outgoing_t *orq, int retransmit)
     if (cc)
       nta_compartment_decref(&cc);
 
-    if (orq->orq_user_tport)
+    if (orq->orq_user_tport || !orq->orq_try_other_tp)
       /* No retries */;
     /* RFC3261, 18.1.1 */
     else if (err == EMSGSIZE && !orq->orq_try_tcp_instead) {
