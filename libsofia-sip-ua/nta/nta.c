@@ -8037,8 +8037,9 @@ nta_outgoing_t *outgoing_create(nta_agent_t *agent,
       call_tls_orq_connect_timeout_is_set = 1;
       call_tls_orq_connect_timeout = t->t_value;
       if (call_tls_orq_connect_timeout > NTA_TIME_MAX) call_tls_orq_connect_timeout = NTA_TIME_MAX;
-    } else if (ntatag_retry_other_tp == tt) {
-      retry_other_tp = t->t_value;
+    }
+    else if (ntatag_retry_other_tp == tt) {
+      retry_other_tp = t->t_value != 0;
     }
   }
 
